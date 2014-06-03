@@ -1,0 +1,19 @@
+{
+  "name": "spot-foursquare-requester",
+  "version": "0.0.1",
+  "description": "spot-foursquare-requester =========================",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mrap/spot-foursquare-requester.git"
+  },
+  "author": "Mike Rapadas <mike@mrap.me>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrap/spot-foursquare-requester/issues"
+  },
+  "homepage": "https://github.com/mrap/spot-foursquare-requester"
+}
