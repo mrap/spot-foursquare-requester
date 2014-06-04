@@ -58,13 +58,14 @@ schema.statics.fetchPhotoUrlsForVenues = function(venueIds, done){
       if (venue.needsRefresh) return;
       responseData[venue.id] = venue._photos; // add responseData
       var index = venueIds.indexOf(venue.id); // remove from venueIds array
-      venueIds.splice(index, index+1);
+      delete venueIds[index];
     });
 
     // next: process all remaining venues
     async.each(venueIds, function(venueId, callback){
+      if (!venueId) return callback(); // already processed
       var index = dbHelper.indexOfObjectId(venues, venueId)
-        , venue = (index > -1) ? venues[index] : new Venue({_id: venueId}) ;
+        , venue = (index > -1) ? venues[index] : new Venue({_id: venueId});
 
       request(getVenuePhotosRequestOptions(venueId), function(err, res, body){
         if (err || res.statusCode >= 400) return callback(err || res.statusCode);
@@ -74,11 +75,19 @@ schema.statics.fetchPhotoUrlsForVenues = function(venueIds, done){
         responseData[venueId] = [];
         photoRefs.forEach(function(ref){
           ref.venueId = venue.id;
-          var photo = FoursquarePhoto.newFromRef(ref);
+          var index = dbHelper.indexOfObjectId(venue._photos, ref.id)
+            , photo = (index > -1) ? venue._photos[index] : FoursquarePhoto.newFromRef(ref);
           responseData[venueId].push(photo);
+
+          // Save only if a new photo
+          if (index === -1) {
+            venue._photos.push(photo);
+            photo.save(function(err){ console.error(err); });
+          }
         });
+
+        // Callback now, then save to mongo in the bg
         callback();
-        venue._photos.addToSet(responseData[venueId]);
         venue.save(function(err){ if (err) console.error(err); });
       });
     }, function(err){
