@@ -30,11 +30,13 @@ var venuePhotosUrl = function(venueId){
 // Configure foursquare request params
 var CLIENT_ID     = process.env.FOURSQUARE_CLIENT_ID
   , CLIENT_SECRET = process.env.FOURSQUARE_CLIENT_SECRET
-  , API_VERSION   = process.env.FOURSQUARE_API_VERSION || '20140226';
+  , API_VERSION   = process.env.FOURSQUARE_API_VERSION || '20140226'
+  , PHOTOS_LIMIT  = 4;
 var requestParams = {
   client_id     : CLIENT_ID,
   client_secret : CLIENT_SECRET,
-  v             : API_VERSION
+  v             : API_VERSION,
+  limit         : PHOTOS_LIMIT
 };
 
 var getVenuePhotosRequestOptions = function(venueId){
