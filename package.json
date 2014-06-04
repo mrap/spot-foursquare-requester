@@ -15,5 +15,15 @@
   "bugs": {
     "url": "https://github.com/mrap/spot-foursquare-requester/issues"
   },
-  "homepage": "https://github.com/mrap/spot-foursquare-requester"
+  "homepage": "https://github.com/mrap/spot-foursquare-requester",
+  "devDependencies": {
+    "nodemon": "^1.1.1"
+  },
+  "dependencies": {
+    "async": "^0.9.0",
+    "formidable": "^1.0.14",
+    "mongoose": "^3.8.12",
+    "node-async": "0.0.1",
+    "request": "^2.36.0"
+  }
 }
