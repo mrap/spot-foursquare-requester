@@ -5,24 +5,31 @@ var mongoose = require('mongoose')
 
 var schema = new mongoose.Schema({
   _id        : { type: String, unique: true, required: true, index: true },
-  _venue     : { type: String, ref: 'FoursquareVenue', required: true },
+  venue_id   : { type: String, ref: 'FoursquareVenue', required: true },
   prefix     : { type: String, required: true },
   suffix     : { type: String, required: true },
-  created_at : { type: Date, default: Date.now }
+  createdAt  : { type: Date, default: Date.now }
 
 }, {
   _id: false,
-  autoIndex: false
+  autoIndex: false,
+  toJSON: {
+    minimize: false,
+    transform: function(doc, ret, options){
+      delete ret._id;
+      ret.id = doc.id;
+    }
+  }
 });
 
 schema.statics.newFromRef = function(ref){
   if (!ref || !ref.id || !ref.venueId) return null;
   var photo = new this({
-    _id        : ref.id,
-    _venue     : ref.venueId,
+    _id         : ref.id,
+    venue_id   : ref.venueId,
     prefix     : ref.prefix,
     suffix     : ref.suffix,
-    created_at : ref.createdAt
+    createdAt  : ref.createdAt
   });
   return photo;
 };

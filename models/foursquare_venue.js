@@ -1,15 +1,18 @@
 'use strict'
 
-var mongoose = require('mongoose')
-  , Schema   = mongoose.Schema
+var mongoose        = require('mongoose')
+  , Schema          = mongoose.Schema
   , FoursquarePhoto = mongoose.model('FoursquarePhoto')
-  , request  = require('request')
-  , async    = require('async')
-  , dbHelper = require('../db_helper');
+  , request         = require('request')
+  , async           = require('async')
+  , dbHelper        = require('../db_helper')
+  , JSONStream      = require('JSONStream')
+  , Transform       = require('stream').Transform
+  , _               = require('underscore');
 
 var schema = new mongoose.Schema({
   _id               : { type: String, unique: true, required: true, index: true },
-  _photos           : [{ type: String, ref: 'FoursquarePhoto' }],
+  photos            : [{ type: String, ref: 'FoursquarePhoto' }],
   last_refreshed_at : { type: Date, default: Date.now() }
 }, {
   _id: false,
@@ -50,13 +53,13 @@ schema.statics.fetchPhotoUrlsForVenues = function(venueIds, done){
   var Venue = this
     , responseData = {}; // will return in done callback
 
-  Venue.find({'_id': {$in: venueIds} }).populate('_photos').exec(function(err, venues){
+  Venue.find({'_id': {$in: venueIds} }).populate('photos').exec(function(err, venues){
     if (err) return done(err, null);
 
     // process all existing venues that do not require refreshing
     venues.forEach(function(venue){
       if (venue.needsRefresh) return;
-      responseData[venue.id] = venue._photos; // add responseData
+      responseData[venue.id] = venue.photos; // add responseData
       var index = venueIds.indexOf(venue.id); // remove from venueIds array
       delete venueIds[index];
     });
@@ -75,13 +78,13 @@ schema.statics.fetchPhotoUrlsForVenues = function(venueIds, done){
         responseData[venueId] = [];
         photoRefs.forEach(function(ref){
           ref.venueId = venue.id;
-          var index = dbHelper.indexOfObjectId(venue._photos, ref.id)
-            , photo = (index > -1) ? venue._photos[index] : FoursquarePhoto.newFromRef(ref);
-          responseData[venueId].push(photo);
+          var index = dbHelper.indexOfObjectId(venue.photos, ref.id)
+            , photo = (index > -1) ? venue.photos[index] : FoursquarePhoto.newFromRef(ref);
+          responseData[venueId].push(photo.toJSON());
 
           // Save only if a new photo
           if (index === -1) {
-            venue._photos.push(photo);
+            venue.photos.push(photo);
             photo.save(function(err){ console.error(err); });
           }
         });
@@ -93,6 +96,58 @@ schema.statics.fetchPhotoUrlsForVenues = function(venueIds, done){
     }, function(err){
       done(err, responseData)
     });
+  });
+};
+
+schema.statics.streamVenuePhotoUrls = function(venueId, req, res){
+  var Venue = this;
+  Venue.findOne({_id: venueId}).populate('photos').exec(function(err, venue){
+    if (err) console.error(err);
+
+    if (venue && !venue.needsRefresh()) {
+      return async.map(venue.photos,
+                       function(photo, next){
+                         next(null, photo.toJSON());
+                       }, function(err, results){
+                         res.end(JSON.stringify(results));
+                       });
+    }
+
+    venue = new Venue({ _id: venueId });
+
+    var stream       = JSONStream.parse('response..items')
+      , transform    = new Transform({objectMode: true})
+      , photoObjects = [];
+
+    transform._transform = function(photoRefs, encoder, next){
+      async.map(photoRefs,
+                function(ref, next){
+                  ref.venueId = venueId;
+                  var photo = FoursquarePhoto.newFromRef(ref);
+                  photoObjects.push(photo);
+                  next(null, photo.toJSON());
+                },
+                function(err, results){
+                  transform.push(JSON.stringify(results));
+                  next();
+
+                  // Save to update mongo
+                  venue.last_refreshed_at = Date.now();
+                  async.each(photoObjects, function(photo, cb){
+                    if (dbHelper.indexOfObjectId(venue.photos, photo.id) > -1) return cb();
+                    venue.photos.addToSet(photo.id);
+                    cb();
+                    // photo.save(function(err){ if (err) console.error(err); });
+                  }, function(err){
+                    // venue.save(function(err){ if (err) console.error(err); });
+                  });
+                });
+    };
+
+    request(getVenuePhotosRequestOptions(venueId))
+      .pipe(stream)
+      .pipe(transform)
+      .pipe(res);
   });
 };
 

@@ -20,10 +20,12 @@
     "nodemon": "^1.1.1"
   },
   "dependencies": {
+    "JSONStream": "^0.8.2",
     "async": "^0.9.0",
     "formidable": "^1.0.14",
     "mongoose": "^3.8.12",
     "node-async": "0.0.1",
-    "request": "^2.36.0"
+    "request": "^2.36.0",
+    "underscore": "^1.6.0"
   }
 }

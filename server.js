@@ -23,13 +23,14 @@ http.createServer(function(req, res) {
     var query = querystring.parse(reqUrl.query)
       , venueIds = query.venue_ids;
     if (!venueIds) return res.end();
-    if (!util.isArray(venueIds)) venueIds = [venueIds];
+    
+    if (typeof venueIds == 'string') return FoursquareVenue.streamVenuePhotoUrls(venueIds, req, res);
 
     FoursquareVenue.fetchPhotoUrlsForVenues(venueIds, function(err, photoUrls){
       if (err) return res.end(err.toString());
       res.end(JSON.stringify(photoUrls));
     });
-    
+
   } else if (method === 'POST') {
     // res immedately
     // update the db
