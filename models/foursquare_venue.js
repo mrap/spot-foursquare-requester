@@ -85,7 +85,7 @@ schema.statics.fetchPhotoUrlsForVenues = function(venueIds, done){
           // Save only if a new photo
           if (index === -1) {
             venue.photos.push(photo);
-            photo.save(function(err){ console.error(err); });
+            photo.save(function(err){ if (err) console.error(err); });
           }
         });
 
@@ -113,7 +113,7 @@ schema.statics.streamVenuePhotoUrls = function(venueId, req, res){
                        });
     }
 
-    venue = new Venue({ _id: venueId });
+    if (!venue) venue = new Venue({ _id: venueId });
 
     var stream       = JSONStream.parse('response..items')
       , transform    = new Transform({objectMode: true})
@@ -137,9 +137,9 @@ schema.statics.streamVenuePhotoUrls = function(venueId, req, res){
                     if (dbHelper.indexOfObjectId(venue.photos, photo.id) > -1) return cb();
                     venue.photos.addToSet(photo.id);
                     cb();
-                    // photo.save(function(err){ if (err) console.error(err); });
+                    photo.save(function(err){ if (err) console.error(err); });
                   }, function(err){
-                    // venue.save(function(err){ if (err) console.error(err); });
+                    venue.save(function(err){ if (err) console.error(err); });
                   });
                 });
     };
