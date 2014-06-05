@@ -25,7 +25,7 @@ var schema = new mongoose.Schema({
 schema.statics.newFromRef = function(ref){
   if (!ref || !ref.id || !ref.venueId) return null;
   var photo = new this({
-    _id         : ref.id,
+    _id        : ref.id,
     venue_id   : ref.venueId,
     prefix     : ref.prefix,
     suffix     : ref.suffix,
