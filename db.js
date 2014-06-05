@@ -13,4 +13,14 @@ db.once('open', function(){
 
 mongoose.connect(uri);
 
+// "Clear cache"
+var clearCache = function() {
+  console.log('"Clearing cache"');
+};
+
+var clearCacheInterval = 600000; // 10 minutes
+setInterval(function(){
+  clearCache();
+}, clearCacheInterval);
+
 module.exports = mongoose;
