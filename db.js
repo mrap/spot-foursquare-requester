@@ -13,14 +13,16 @@ db.once('open', function(){
 
 mongoose.connect(uri);
 
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+var INTERVAL_MIN = 120000  // 2 minutes
+  , INTERVAL_MAX = 300000; // 5 minutes
 // "Clear cache"
 var clearCache = function() {
   console.log('"Clearing cache"');
+  setTimeout(clearCache, getRandomInt(INTERVAL_MIN, INTERVAL_MAX));
 };
-
-var clearCacheInterval = 600000; // 10 minutes
-setInterval(function(){
-  clearCache();
-}, clearCacheInterval);
 
 module.exports = mongoose;
