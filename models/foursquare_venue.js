@@ -7,8 +7,7 @@ var mongoose        = require('mongoose')
   , async           = require('async')
   , dbHelper        = require('../db_helper')
   , JSONStream      = require('JSONStream')
-  , Transform       = require('stream').Transform
-  , _               = require('underscore');
+  , Transform       = require('stream').Transform;
 
 var schema = new mongoose.Schema({
   _id               : { type: String, unique: true, required: true, index: true },
